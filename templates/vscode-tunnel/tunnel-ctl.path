@@ -1,0 +1,13 @@
+# /etc/systemd/system/tunnel-ctl.path
+# Watcher: ждёт пока бот пользователя создаст flag-файл ~/.agent/.tunnel-start.
+# Когда файл появляется — systemd триггерит tunnel-ctl.service (от root, через path → service).
+# Этот паттерн позволяет боту без sudo поднять agent-tunnel.service.
+[Unit]
+Description=Watch for tunnel start request
+StartLimitBurst=0
+
+[Path]
+PathExists=HOME_PLACEHOLDER/.agent/.tunnel-start
+
+[Install]
+WantedBy=multi-user.target
