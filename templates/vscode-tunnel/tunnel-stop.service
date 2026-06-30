@@ -1,0 +1,12 @@
+# /etc/systemd/system/tunnel-stop.service
+# Триггерится tunnel-stop.path. Останавливает agent-tunnel, чистит flag-файл и
+# сбрасывает failed-состояние всех 3 юнитов (path + ctl + tunnel) чтобы
+# следующее /connect отработало чисто.
+[Unit]
+Description=Stop agent-tunnel on trigger
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl stop agent-tunnel
+ExecStartPost=/bin/rm -f HOME_PLACEHOLDER/.agent/.tunnel-stop
+ExecStartPost=-/bin/systemctl reset-failed agent-tunnel tunnel-ctl.path tunnel-ctl.service
