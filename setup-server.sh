@@ -140,18 +140,36 @@ fi
 
 if command -v code &>/dev/null; then
   log "VS Code CLI установлен"
-  echo ""
-  echo -e "${CYAN}Сейчас нужно привязать сервер к вашему GitHub.${NC}"
-  echo -e "${CYAN}Появится ссылка и код — откройте ссылку в браузере и введите код.${NC}"
-  echo -e "${CYAN}После авторизации нажмите Ctrl+C чтобы продолжить.${NC}"
-  echo ""
-  code tunnel --accept-server-license-terms || true
-  # Устанавливаем как постоянный сервис
-  code tunnel service install --accept-server-license-terms 2>/dev/null || true
-  log "VS Code Tunnel установлен как постоянный сервис"
+
+  # Инфраструктура для команды /connect в боте (systemd path-юниты,
+  # без интерактивной авторизации на этапе установки — она пройдёт позже в Telegram).
+  TUNNEL_TEMPLATES_DIR="/tmp/agent-tunnel-templates"
+  mkdir -p "$TUNNEL_TEMPLATES_DIR"
+  TUNNEL_BASE_URL="https://raw.githubusercontent.com/mechta921-source/agent-files/main/templates/vscode-tunnel"
+  TUNNEL_FILES="install-vscode-tunnel.sh agent-tunnel.service tunnel-ctl.path tunnel-ctl.service tunnel-stop.path tunnel-stop.service"
+
+  TUNNEL_OK=1
+  for f in $TUNNEL_FILES; do
+    if ! curl -fsSL "$TUNNEL_BASE_URL/$f" -o "$TUNNEL_TEMPLATES_DIR/$f" 2>/dev/null; then
+      warn "Не скачался $f — туннель можно будет поставить позже через update-bot.sh"
+      TUNNEL_OK=0
+      break
+    fi
+  done
+
+  if [ $TUNNEL_OK -eq 1 ]; then
+    chmod +x "$TUNNEL_TEMPLATES_DIR/install-vscode-tunnel.sh"
+    TUNNEL_HEX=$(printf '%s' "$(hostname)" | md5sum | cut -c1-8)
+    TUNNEL_NAME="agent-${TUNNEL_HEX}"
+    if bash "$TUNNEL_TEMPLATES_DIR/install-vscode-tunnel.sh" "$TUNNEL_NAME" "$TUNNEL_TEMPLATES_DIR" "$USERNAME"; then
+      log "VS Code Tunnel установлен: $TUNNEL_NAME"
+      log "Напишите боту /connect в Telegram — это подключит VS Code за минуту"
+    else
+      warn "Установка VS Code Tunnel не удалась — можно поставить позже через update-bot.sh"
+    fi
+  fi
 else
-  warn "Не удалось установить VS Code CLI. Установите вручную:"
-  warn "curl -fL 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' -o /tmp/c.tar.gz && tar -xzf /tmp/c.tar.gz -C /usr/local/bin/"
+  warn "Не удалось установить VS Code CLI. Туннель поставится позже через update-bot.sh"
 fi
 
 # =====================
