@@ -1,0 +1,12 @@
+# /etc/systemd/system/tunnel-stop.path
+# Watcher: ждёт ~/.agent/.tunnel-stop (создаётся ботом при /disconnect).
+# Когда файл появляется — триггерит tunnel-stop.service (от root).
+[Unit]
+Description=Watch for tunnel stop request
+StartLimitBurst=0
+
+[Path]
+PathExists=HOME_PLACEHOLDER/.agent/.tunnel-stop
+
+[Install]
+WantedBy=multi-user.target
