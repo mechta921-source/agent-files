@@ -1,0 +1,14 @@
+# /etc/systemd/system/tunnel-ctl.service
+# Триггерится tunnel-ctl.path когда бот пользователя создал ~/.agent/.tunnel-start.
+# Запускается root'ом (systemd-юнит без User=), делает 3 вещи:
+#   1. reset-failed на случай если предыдущий запуск провалился
+#   2. удаляет flag-файл (чтобы path-юнит мог сработать снова в следующий раз)
+#   3. запускает agent-tunnel.service
+[Unit]
+Description=Start agent-tunnel on trigger
+
+[Service]
+Type=oneshot
+ExecStartPre=-/bin/systemctl reset-failed agent-tunnel
+ExecStartPre=/bin/rm -f HOME_PLACEHOLDER/.agent/.tunnel-start
+ExecStart=/bin/systemctl start agent-tunnel
