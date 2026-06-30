@@ -1,0 +1,25 @@
+# /etc/systemd/system/agent-tunnel.service
+# VS Code Remote Tunnel для персонального AI-агента.
+# Запускается через trigger из tunnel-ctl.path (writeFileSync ~HOME_PLACEHOLDER~/.agent/.tunnel-start).
+# Все плейсхолдеры (USER_PLACEHOLDER, HOME_PLACEHOLDER, TUNNEL_NAME_PLACEHOLDER) подставляются
+# install-vscode-tunnel.sh через sed в момент установки.
+[Unit]
+Description=VS Code Remote Tunnel
+Documentation=https://code.visualstudio.com/docs/remote/tunnels
+After=network.target agent-bot.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=USER_PLACEHOLDER
+WorkingDirectory=HOME_PLACEHOLDER/workspace
+ExecStart=/usr/local/bin/code tunnel --accept-server-license-terms --name TUNNEL_NAME_PLACEHOLDER
+Restart=on-failure
+RestartSec=15
+Environment=HOME=HOME_PLACEHOLDER
+Environment=VSCODE_CLI_DATA_DIR=HOME_PLACEHOLDER/.vscode-tunnel
+
+[Install]
+WantedBy=multi-user.target
